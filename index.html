@@ -1300,12 +1300,29 @@ const loadL=a=>{try{return JSON.parse(localStorage.getItem(lkey(a))||'null')}cat
 const saveL=(a,st)=>{try{localStorage.setItem(lkey(a),JSON.stringify(st))}catch(e){}};
 async function send(a,st){const c=ctx();if(!c.DB||!c.U||!c.ME||!c.DB.set)return'login';
  const doc={uid:c.U.uid,sid:c.ME.sid||'',name:c.ME.name||'',cls:c.ME.cls||'',no:c.ME.no||'',site:A.site,act:a.id,title:a.title,
-  see:st.see||'',wonder:st.wonder||'',pre:st.pre||'',rows:JSON.stringify(st.rows),ex:st.ex||'',C:st.C||'',E:st.E||'',R:st.R||'',chg:st.chg||'',lim:st.lim||'',
+  see:st.see||'',wonder:st.wonder||'',pre:st.pre||'',rows:JSON.stringify(st.rows||[]),ex:st.ex||'',C:st.C||'',E:st.E||'',R:st.R||'',chg:st.chg||'',lim:st.lim||'',
   time:window.firebase&&firebase.firestore?firebase.firestore.FieldValue.serverTimestamp():new Date()};
  await c.DB.set('selc/'+c.U.uid+'_'+A.site+'_'+a.id,doc,true);return'ok'}
 
 /* ---------- การ์ด ---------- */
-function card(a){const L=A.place(a.where);if(!L||L.querySelector('.slc[data-a="'+a.id+'"]'))return;
+
+/* ---------- แบบวัด CER ก่อน/หลังเรียน ---------- */
+const TEST={q:'สหกรณ์โรงเรียนบันทึกอุณหภูมิสูงสุดของวันกับจำนวนน้ำดื่มขวดที่ขายได้ 6 วัน (ข้อมูลสมมุติสำหรับแบบวัด) <b>อากาศที่ร้อนขึ้นทำให้ขายน้ำดื่มได้มากขึ้นหรือไม่?</b> ตอบแบบ CER แล้วบอกว่าข้อมูลนี้ยังสรุปอะไรไม่ได้',
+ head:['วันที่','1','2','3','4','5','6'],rows:[['อุณหภูมิสูงสุด (°C)','30','32','33','35','36','38'],['น้ำดื่มที่ขายได้ (ขวด)','42','50','55','63','66','75']]};
+function testCard(a){const L=A.place(a.where);if(!L||L.querySelector('.slc[data-a="'+a.id+'"]'))return;let st=loadL(a)||{};
+ const s=document.createElement('section');s.className='slc';s.dataset.a=a.id;s.style.borderColor='#f2a33a';
+ const F=(k,lab)=>`<label for="sl-${a.id}-${k}">${lab}</label><textarea id="sl-${a.id}-${k}" data-k="${k}">${esc(st[k]||'')}</textarea>`;
+ s.innerHTML=`<span class="bdg c">STEM·SELC</span><span class="bdg s">${a.id==='cerpre'?'ก่อนเรียน':'หลังเรียน'}</span><h3>📝 ${esc(a.title)}</h3>
+ <p class="msg">ทำคนเดียว ไม่มีถูกผิด ครูใช้ดูพัฒนาการการอธิบายด้วยหลักฐาน ใช้เวลาประมาณ 10 นาที</p>
+ <div class="stp"><p style="margin:0 0 8px">${TEST.q}</p><div style="overflow-x:auto"><table><tr>${TEST.head.map(h=>`<th>${h}</th>`).join('')}</tr>${TEST.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></div></div>
+ <div class="stp">${F('C','C ข้อกล่าวอ้าง')}${F('E','E หลักฐาน (ยกตัวเลขจากตาราง)')}${F('R','R เหตุผล (ใช้หลักคณิตศาสตร์)')}${F('lim','ข้อมูลนี้ยังสรุปอะไรไม่ได้?')}
+ <div class="row"><button type="button" class="p sl-send">ส่งคำตอบ</button></div><p class="msg sl-msg"></p></div>`;
+ L.prepend(s);
+ s.querySelectorAll('textarea[data-k]').forEach(t=>t.oninput=()=>{st[t.dataset.k]=t.value;saveL(a,st)});
+ const msg=s.querySelector('.sl-msg');s.querySelector('.sl-send').onclick=async()=>{if(!(st.C&&st.E&&st.R)){msg.textContent='เขียน C E R ให้ครบก่อนส่งนะ';return}msg.textContent='กำลังส่ง…';
+  try{const r=await send(a,st);msg.textContent=r==='ok'?'ส่งแล้ว ✓ ขอบคุณ':'เข้าสู่ระบบก่อนจึงจะส่งได้ (คำตอบยังเก็บไว้ในเครื่อง)'}catch(e){msg.textContent='ส่งไม่สำเร็จ ลองใหม่อีกครั้ง'}}}
+
+function card(a){if(a.test)return testCard(a);const L=A.place(a.where);if(!L||L.querySelector('.slc[data-a="'+a.id+'"]'))return;
  let st=loadL(a)||{rows:a.rows.map(r=>r.slice()),ex:a.extra?a.extra.def:''};
  const s=document.createElement('section');s.className='slc';s.dataset.a=a.id;
  const F=(k,lab,ph)=>`<label for="sl-${a.id}-${k}">${lab}</label><textarea id="sl-${a.id}-${k}" data-k="${k}" placeholder="${esc(ph||'')}">${esc(st[k]||'')}</textarea>`;
@@ -1409,6 +1426,7 @@ const SELC_M5=[
  limit:'การคำนวณนี้ยังไม่รวมค่าบำรุงรักษา แผงที่เสื่อมลงทุกปี และค่าไฟที่อาจขึ้นลง อีกประเด็นคือความเป็นธรรม (Climate Justice): บ้านที่ไม่มีเงินก้อนหรือเช่าบ้านอยู่ติดตั้งไม่ได้ แม้จะได้ประโยชน์ระยะยาว'}
 ];
 const pl=w=>{const cur=decodeURIComponent(location.hash.slice(1)).split('/')[0];if(cur!==w)return null;const k=document.getElementById('b-key2');if(!k)return null;let h=document.getElementById('slcHost');if(!h){h=document.createElement('div');h.id='slcHost';k.after(h)}return h};
+SELC_M5.push({id:'cerpre',test:1,where:'s1',title:'แบบวัดการอธิบายด้วยหลักฐาน (ก่อนเรียน)'},{id:'cerpost',test:1,where:'m3',title:'แบบวัดการอธิบายด้วยหลักฐาน (หลังเรียน)'});
 window.SELC5=KSelc({site:SITE,ctx:()=>window.M5X?M5X():{},place:pl,isT:c=>!!c.T,acts:SELC_M5,hook:f=>addEventListener('m5topic',f)});
 })();
 
