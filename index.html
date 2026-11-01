@@ -875,7 +875,7 @@ addEventListener('m5topic',e=>{const id=e.detail;if(!ME||!U||lastW===id)return;l
 init();
 })();
 /* ===== ตัวนับผู้เข้าชม (GoatCounter) ครูดูสถิติที่ goatcounter.com ไม่แสดงตัวเลขบนเว็บ ===== */
-(function(){let n=0;const t=setInterval(()=>{const C=window.CFG;if(!C&&++n<40)return;clearInterval(t);const g=((C||{}).goatcounter||'').trim();if(!/^[a-z0-9-]+$/.test(g))return;
+(function(){let n=0;const t=setInterval(()=>{const C=window.CFG;if(!C&&++n<40)return;clearInterval(t);const g=((C||{}).goatcounter||'mathdevth').trim();if(!/^[a-z0-9-]+$/.test(g))return;
  window.goatcounter={no_onload:true};const s=document.createElement('script');s.async=true;s.dataset.goatcounter=`https://${g}.goatcounter.com/count`;s.src='https://gc.zgo.at/count.js';
  s.onload=()=>{const send=()=>{const h=(location.hash||'').slice(1).split('/')[0];const tp=T[h];try{window.goatcounter.count({path:'/m5/'+(h||'home'),title:tp?`ม.5 ${tp.k} ${tp.title}`:'ม.5 หน้าแรก'})}catch(e){}};send();addEventListener('hashchange',send)};document.head.appendChild(s)},150)})();
 
@@ -1157,5 +1157,260 @@ return{book,advise,fab,_load:load};
 window.M5Plus=KPlus({site:'m5',ansEvent:'m5ans',testCol:'m5tests',ctx:()=>window.M5X?M5X():{},
  title:c=>T[c]&&typeof G[c]==='function'?T[c].k+' '+T[c].title:null,drill:(c,g)=>M5Drill.open(c,{goal:g}),
  unitTopics:(t,u)=>{const x=UNITS.find(v=>v.u==u&&(v.term==null||t==null||v.term==t));return x?x.topics:[]}});
+</script>
+<script>
+/* ===== อธิบายเหตุผลแบบ CER (ข้อกล่าวอ้าง · หลักฐาน · เหตุผล) ใช้ร่วม ม.3 ม.5 ม.5+ ===== */
+window.KReason=function(A){
+/* A={site, ctx()->{DB,U,ME,T}, tasks:[{id,where,title,q,data,model:{C,E,R}}], place(task)->host element|null, hook(fn) optional for SPA re-render} */
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const css=document.createElement('style');css.textContent=`
+.krs{margin:18px 0;padding:16px 18px;border-radius:18px;border:2px solid #e0558f;background:color-mix(in srgb,#e0558f 6%,transparent);text-align:left}
+.krs h3{margin:0 0 4px;font-size:18px}.krs .kq{font-size:17px;margin:8px 0}.krs .kd{overflow:auto;margin:8px 0}
+.krs table{border-collapse:collapse;min-width:280px}.krs td,.krs th{border:1px solid color-mix(in srgb,currentColor 25%,transparent);padding:4px 10px;text-align:center}
+.krs label.kf{display:block;margin:10px 0 4px;font-weight:700}.krs label.kf i{font-style:normal;font-weight:400;opacity:.75;font-size:14px;display:block}
+.krs textarea{width:100%;box-sizing:border-box;min-height:64px;font:inherit;color:inherit;background:transparent;border:1px solid color-mix(in srgb,currentColor 30%,transparent);border-radius:12px;padding:8px 10px;resize:vertical}
+.krs .tg{display:inline-block;border-radius:8px;padding:0 8px;color:#fff;font-size:13px;margin-right:6px}.krs .tC{background:#e0558f}.krs .tE{background:#2f7de1}.krs .tR{background:#17a673}
+.krs .ck{display:grid;gap:6px;margin:10px 0}.krs .ck label{display:flex;gap:8px;align-items:center;font-size:15px}
+.krs .ck input{width:20px;height:20px}
+.krs .kb{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.krs button{font:inherit;border-radius:12px;padding:8px 14px;min-height:42px;cursor:pointer;border:1px solid color-mix(in srgb,currentColor 25%,transparent);background:transparent;color:inherit}
+.krs button.p{background:#e0558f;border-color:#e0558f;color:#fff;font-weight:600}
+.krs .model{margin-top:10px;padding:10px 14px;border-radius:12px;border-left:5px solid #17a673;background:color-mix(in srgb,#17a673 10%,transparent)}
+.krs .msg{font-size:14px;opacity:.85;margin-top:6px}
+.krs .tv table{width:100%;font-size:14px}.krs .tv td{text-align:left;vertical-align:top}`;document.head.appendChild(css);
+const key=t=>{const c=A.ctx()||{};return 'krs-'+A.site+'-'+(c.U&&c.U.uid||'guest')+'-'+t.id};
+const fs=()=>window.firebase&&firebase.firestore?firebase.firestore():null;
+async function save(t,d){const c=A.ctx()||{};if(!c.DB||!c.U||!c.ME)return false;const doc={uid:c.U.uid,sid:c.ME.sid||'',name:c.ME.name||'',cls:c.ME.cls||'',no:c.ME.no||'',site:A.site,task:t.id,title:t.title,C:d.C,E:d.E,R:d.R,self:d.self,time:window.firebase&&firebase.firestore?firebase.firestore.FieldValue.serverTimestamp():new Date()};
+ if(c.DB.set&&!c.DB.fs){await c.DB.set('reason/'+c.U.uid+'_'+A.site+'_'+t.id,doc,true);return true}const f=fs();if(!f)return false;await f.doc('reason/'+c.U.uid+'_'+A.site+'_'+t.id).set(doc,{merge:true});return true}
+async function list(t){const c=A.ctx()||{};let r=[];if(c.DB&&c.DB.q&&!c.DB.fs)r=await c.DB.q('reason',[['task','==',t.id]]);else{const s=await fs().collection('reason').where('task','==',t.id).get();r=s.docs.map(d=>({id:d.id,...d.data()}))}return r.filter(x=>x.site===A.site)}
+function card(t){const d=document.createElement('section');d.className='krs';d.dataset.task=t.id;let st={};try{st=JSON.parse(localStorage.getItem(key(t))||'{}')}catch(e){}
+ const c=A.ctx()||{};
+ d.innerHTML=`<h3>🔎 อธิบายเหตุผล (CER) · ${esc(t.title)}</h3><p class="msg">ตอบให้ครบ 3 ส่วน: <span class="tg tC">C</span>ข้อกล่าวอ้าง <span class="tg tE">E</span>หลักฐานจากข้อมูล <span class="tg tR">R</span>เหตุผลทางคณิตศาสตร์</p>
+ <div class="kq">${t.q}</div><div class="kd">${t.data||''}</div>
+ ${['C','E','R'].map(k=>`<label class="kf" for="k${t.id}${k}"><span class="tg t${k}">${k}</span>${{C:'ข้อกล่าวอ้าง',E:'หลักฐาน',R:'เหตุผล'}[k]}<i>${{C:'ตอบคำถามให้ตรงประเด็นในประโยคเดียว',E:'ยกตัวเลขหรือข้อมูลที่สนับสนุนคำตอบ อย่างน้อย 2 จุด',R:'อธิบายด้วยหลักคณิตศาสตร์ว่าทำไมหลักฐานนี้จึงสนับสนุนคำตอบ'}[k]}</i></label><textarea id="k${t.id}${k}" maxlength="800">${esc(st[k]||'')}</textarea>`).join('')}
+ <div class="ck"><b style="font-size:15px">ตรวจงานตัวเองก่อนส่ง</b>${[['c1','C ตอบคำถามตรงประเด็น'],['c2','E มีตัวเลขจากข้อมูลอย่างน้อย 2 จุด'],['c3','R ใช้หลักคณิตศาสตร์ ไม่ใช่ความรู้สึก']].map(([k,l])=>`<label><input type="checkbox" data-k="${k}" ${st.self&&st.self[k]?'checked':''}> ${l}</label>`).join('')}</div>
+ <div class="kb"><button type="button" class="p ks">ส่งคำตอบและดูตัวอย่างคำตอบ</button>${c.T?'<button type="button" class="kt">ดูคำตอบนักเรียน (ครู)</button>':''}</div><p class="msg km"></p><div class="mdl"></div><div class="tv"></div>`;
+ const get=()=>({C:d.querySelector(`#k${t.id}C`).value.trim(),E:d.querySelector(`#k${t.id}E`).value.trim(),R:d.querySelector(`#k${t.id}R`).value.trim(),self:Object.fromEntries([...d.querySelectorAll('.ck input')].map(i=>[i.dataset.k,i.checked]))});
+ d.querySelectorAll('textarea,.ck input').forEach(x=>x.addEventListener('input',()=>{try{localStorage.setItem(key(t),JSON.stringify(get()))}catch(e){}}));
+ const showModel=()=>{d.querySelector('.mdl').innerHTML=`<div class="model"><b>ตัวอย่างคำตอบ</b> (เขียนต่างได้ ถ้าเหตุผลถูกต้อง)<p><span class="tg tC">C</span>${t.model.C}</p><p><span class="tg tE">E</span>${t.model.E}</p><p><span class="tg tR">R</span>${t.model.R}</p></div>`};
+ if(st.sent)showModel();
+ d.querySelector('.ks').onclick=async()=>{const v=get(),m=d.querySelector('.km');if(!v.C||!v.E||!v.R){m.textContent='เขียนให้ครบทั้ง C, E และ R ก่อนส่ง';return}
+  v.sent=true;try{localStorage.setItem(key(t),JSON.stringify(v))}catch(e){}showModel();
+  try{const ok=await save(t,v);m.textContent=ok?'ส่งให้ครูแล้ว ✓ เทียบคำตอบของเรากับตัวอย่างด้านล่าง แก้แล้วส่งใหม่ได้':'ยังไม่ได้เข้าสู่ระบบ คำตอบเก็บไว้ในเครื่องนี้ ลองเทียบกับตัวอย่างด้านล่าง'}catch(e){m.textContent='ส่งไม่สำเร็จ ลองใหม่อีกครั้ง'}};
+ const kt=d.querySelector('.kt');if(kt)kt.onclick=async()=>{const V=d.querySelector('.tv');V.innerHTML='<p>กำลังโหลด…</p>';let r=[];try{r=await list(t)}catch(e){V.innerHTML='<p>โหลดไม่ได้ ตรวจกฎ Firestore ของ reason</p>';return}
+  r.sort((a,b)=>String(a.cls).localeCompare(b.cls,'th',{numeric:true})||(+a.no||0)-(+b.no||0));
+  V.innerHTML=`<p><b>ส่งแล้ว ${r.length} คน</b></p><div style="overflow:auto"><table><tr><th>ชั้น/เลขที่</th><th>ชื่อ</th><th>C</th><th>E</th><th>R</th><th>ตรวจตนเอง</th></tr>${r.map(x=>`<tr><td>${esc(x.cls)} / ${esc(x.no)}</td><td>${esc(x.name)}</td><td>${esc(x.C)}</td><td>${esc(x.E)}</td><td>${esc(x.R)}</td><td>${Object.values(x.self||{}).filter(Boolean).length}/3</td></tr>`).join('')||'<tr><td colspan="6">ยังไม่มีใครส่ง</td></tr>'}</table></div>`};
+ return d}
+function mount(){A.tasks.forEach(t=>{const h=A.place(t);if(!h||h.querySelector(`.krs[data-task="${t.id}"]`))return;h.appendChild(card(t))})}
+mount();if(A.hook)A.hook(mount);
+let lastU='';setInterval(()=>{const c=A.ctx()||{},k=(c.U&&c.U.uid||'')+(c.T?'T':'');if(k!==lastU){lastU=k;document.querySelectorAll('.krs').forEach(x=>x.remove());mount()}},1500);
+return{mount}};
+
+/* ---------- โจทย์ ---------- */
+const TB=(h,rows)=>`<table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}</table>`;
+window.KREASON_TASKS={
+m3:[
+ {id:'i',where:'i3',title:'อสมการ: แพ็กเกจเน็ตไหนคุ้ม',q:'แพ็กเกจ A จ่ายรายเดือน 150 บาท ใช้ได้ไม่จำกัด · แพ็กเกจ B จ่าย 60 บาท บวก 15 บาทต่อ GB · ถ้าใช้เน็ตเดือนละประมาณ 8 GB ควรเลือกแพ็กเกจใด',data:'',model:{C:'ควรเลือกแพ็กเกจ A',E:'B จ่าย 60 + 15(8) = 180 บาท ซึ่งมากกว่า A ที่จ่าย 150 บาท',R:'B คุ้มกว่าเมื่อ 60 + 15x &lt; 150 คือ x &lt; 6 GB เท่านั้น ใช้ 8 GB เกิน 6 GB จึงควรเลือก A'}},
+ {id:'f',where:'f3',title:'แยกตัวประกอบ: กล่องลูกบาศก์',q:'ลูกบาศก์ใหญ่ยาวด้านละ x ซม. ถูกตัดลูกบาศก์เล็กด้านละ 2 ซม. ออกไป ปริมาตรที่เหลือคือ x³ − 8 นักเรียนคนหนึ่งบอกว่า "ปริมาตรที่เหลือเท่ากับ (x − 2)³" ถูกหรือไม่',data:'',model:{C:'ไม่ถูกต้อง',E:'ถ้า x = 4: x³ − 8 = 56 แต่ (x − 2)³ = 8 ไม่เท่ากัน',R:'x³ − 8 แยกตัวประกอบได้ (x − 2)(x² + 2x + 4) ตามสูตรผลต่างกำลังสาม ไม่ใช่ (x − 2)³'}},
+ {id:'q',where:'q3',title:'สมการกำลังสอง: จรวดน้ำ',q:'ความสูงของจรวดน้ำ h = −5t² + 30t (เมตร) เพื่อนบอกว่า "จรวดจะตกถึงพื้นที่เวลา 3 วินาที" เห็นด้วยหรือไม่',data:'',model:{C:'ไม่เห็นด้วย จรวดตกถึงพื้นที่ 6 วินาที',E:'ที่ t = 3 จะได้ h = −45 + 90 = 45 เมตร ยังลอยอยู่ และ h = 0 เมื่อ t = 0 หรือ t = 6',R:'แก้สมการ −5t² + 30t = 0 ได้ −5t(t − 6) = 0 คำตอบ t = 6 คือเวลาที่ตกถึงพื้น ส่วน 3 วินาทีคือจุดสูงสุด'}},
+ {id:'s',where:'s3',title:'ความคล้าย: ป้ายโฆษณา',q:'ร้านต้องการขยายป้ายขนาด 40 × 60 ซม. เป็นป้ายกว้าง 1.2 เมตร พนักงานสั่งทำป้ายขนาด 1.2 × 1.4 เมตร ป้ายใหม่จะคล้ายป้ายเดิมหรือไม่',data:'',model:{C:'ไม่คล้าย ป้ายจะบิดเบี้ยว ควรสั่งขนาด 1.2 × 1.8 เมตร',E:'ป้ายเดิม 40 : 60 = 2 : 3 แต่ป้ายใหม่ 120 : 140 = 6 : 7',R:'รูปคล้ายต้องมีอัตราส่วนของด้านที่สมนัยเท่ากัน ตัวคูณขยาย 120/40 = 3 ด้านยาวจึงต้องเป็น 60 × 3 = 180 ซม.'}},
+ {id:'g',where:'g3',title:'ฟังก์ชันกำลังสอง: ตั้งราคาขาย',q:'ร้านขายน้ำปั่นพบว่าถ้าตั้งราคา x บาท จะได้กำไรต่อวัน P = −2x² + 160x − 2,000 บาท ควรตั้งราคาเท่าใดจึงได้กำไรมากที่สุด',data:'',model:{C:'ควรตั้งราคา 40 บาท ได้กำไรสูงสุด 1,200 บาทต่อวัน',E:'จุดยอดอยู่ที่ x = −160/(2 × −2) = 40 และ P(40) = −3,200 + 6,400 − 2,000 = 1,200',R:'a = −2 &lt; 0 กราฟคว่ำ จุดยอดจึงเป็นค่าสูงสุดของกำไร'}},
+ {id:'t',where:'t3',title:'สถิติ: เลือกตัวแทนแข่งขัน',q:'ครูต้องเลือกนักเรียน 1 คนไปแข่งยิงลูกโทษ จากคะแนนการซ้อม 9 ครั้ง (เต็ม 10) ควรเลือกใคร',data:TB(['','ค่าต่ำสุด','Q₁','Q₂','Q₃','ค่าสูงสุด'],[['ต้น',3,5,7,9,10],['ฝน',6,7,7,8,8]]),model:{C:'ควรเลือกฝน',E:'ทั้งสองคนมี Q₂ = 7 เท่ากัน แต่กล่องของฝนยาว 8 − 7 = 1 ส่วนของต้นยาว 9 − 5 = 4 และคะแนนต่ำสุดของฝนคือ 6 ส่วนต้นคือ 3',R:'มัธยฐานเท่ากัน แต่ข้อมูลของฝนกระจายน้อยกว่า ผลงานจึงสม่ำเสมอ เหมาะกับการแข่งที่มีโอกาสครั้งเดียว'}},
+ {id:'e',where:'e3',title:'ระบบสมการ: ค่าแท็กซี่สองเจ้า',q:'แท็กซี่ A เริ่มต้น 35 บาท กิโลเมตรละ 6 บาท · แท็กซี่ B เริ่มต้น 50 บาท กิโลเมตรละ 5 บาท ต้องเดินทาง 20 กิโลเมตร ควรเลือกเจ้าใด',data:'',model:{C:'ควรเลือก B',E:'A: 35 + 6(20) = 155 บาท · B: 50 + 5(20) = 150 บาท',R:'สองเจ้าจ่ายเท่ากันเมื่อ 35 + 6x = 50 + 5x คือ x = 15 กม. ถ้าไกลกว่า 15 กม. B ถูกกว่าเพราะคิดต่อกิโลเมตรน้อยกว่า'}},
+ {id:'c',where:'c4',title:'วงกลม: วางเสาไฟในสนาม',q:'สนามวงกลมมีทางเดินตรง (คอร์ด) ยาว 16 เมตร และจุดกึ่งกลางทางเดินห่างจากจุดศูนย์กลาง 6 เมตร ช่างบอกว่ารัศมีสนามประมาณ 8 เมตร ถูกหรือไม่',data:'',model:{C:'ไม่ถูก รัศมีคือ 10 เมตร',E:'ครึ่งคอร์ด 8 เมตร ระยะจากจุดศูนย์กลาง 6 เมตร → r = √(8² + 6²) = √100 = 10',R:'เส้นตั้งฉากจากจุดศูนย์กลางแบ่งครึ่งคอร์ด เกิดสามเหลี่ยมมุมฉาก ใช้ทฤษฎีบทพีทาโกรัสหารัศมี รัศมี 8 เมตรจะเท่ากับครึ่งคอร์ดพอดี ซึ่งเป็นไปไม่ได้'}},
+ {id:'v',where:'v3',title:'ปริมาตร: ไอศกรีมแบบไหนได้มากกว่า',q:'ร้าน A ขายไอศกรีมทรงกรวยรัศมี 3 ซม. สูง 12 ซม. ร้าน B ขายเป็นลูกกลมรัศมี 3 ซม. ราคาเท่ากัน ร้านไหนได้ไอศกรีมมากกว่า',data:'',model:{C:'ได้เท่ากัน',E:'กรวย = 1/3 π(3²)(12) = 36π · ทรงกลม = 4/3 π(3³) = 36π ลูกบาศก์ซม.',R:'คำนวณปริมาตรด้วยสูตรของแต่ละรูปทรงแล้วเปรียบเทียบ ได้ 36π เท่ากัน จึงคุ้มเท่ากัน'}},
+ {id:'p',where:'p3',title:'ความน่าจะเป็น: เกมนี้ยุติธรรมไหม',q:'ทอดลูกเต๋า 2 ลูก ถ้าผลรวมเป็นจำนวนคู่ ก ได้แต้ม ถ้าผลรวมเป็นจำนวนเฉพาะ ข ได้แต้ม เกมนี้ยุติธรรมหรือไม่',data:'',model:{C:'ไม่ยุติธรรม ก ได้เปรียบ',E:'ผลรวมคู่มี 18 แบบจาก 36 แบบ (1/2) · ผลรวมเป็นจำนวนเฉพาะ (2, 3, 5, 7, 11) มี 1 + 2 + 4 + 6 + 2 = 15 แบบ (15/36)',R:'ความน่าจะเป็นที่ ก ได้แต้ม 18/36 มากกว่า ข ที่ได้ 15/36 เกมยุติธรรมต้องมีความน่าจะเป็นเท่ากัน'}},
+ {id:'r',where:'r3',title:'ตรีโกณมิติ: ทางลาดรถเข็น',q:'มาตรฐานทางลาดสำหรับรถเข็นควรชันไม่เกินประมาณ 5° โรงเรียนจะทำทางลาดยาว 6 เมตร ขึ้นไปบนแท่นสูง 0.6 เมตร ผ่านมาตรฐานหรือไม่ (sin 5° ≈ 0.087)',data:'',model:{C:'ไม่ผ่าน ทางลาดชันเกินไป',E:'sin θ = 0.6/6 = 0.1 ซึ่งมากกว่า sin 5° ≈ 0.087',R:'sin มีค่าเพิ่มขึ้นเมื่อมุมแหลมใหญ่ขึ้น sin θ &gt; sin 5° แปลว่า θ &gt; 5° ควรทำทางลาดยาวอย่างน้อย 0.6/0.087 ≈ 6.9 เมตร'}}],
+m5:[
+ {id:'seq',where:'u3',title:'ลำดับ: เงินออมแบบไหนได้มากกว่า',q:'แบบ A: เดือนแรกออม 100 บาท แล้วเพิ่มเดือนละ 50 บาท · แบบ B: เดือนแรกออม 100 บาท แล้วออมเป็น 1.2 เท่าของเดือนก่อน · ภายใน 12 เดือน แบบใดได้เงินรวมมากกว่า',data:'',model:{C:'ภายใน 12 เดือน แบบ A ได้เงินรวมมากกว่า',E:'A: S₁₂ = 12/2 [2(100) + 11(50)] = 4,500 บาท · B: S₁₂ = 100(1.2¹² − 1)/(1.2 − 1) ≈ 3,958 บาท',R:'A เป็นอนุกรมเลขคณิต B เป็นอนุกรมเรขาคณิต แม้ B โตแบบทวีคูณ แต่ช่วง 12 เดือนแรกยังตามไม่ทัน ถ้าออมต่อถึงเดือนที่ 15 แบบ B จะแซง (A ≈ 6,750 บาท, B ≈ 7,203 บาท)'}},
+ {id:'int',where:'u4',title:'ดอกเบี้ย: ผ่อนมือถือคุ้มไหม',q:'มือถือราคาเงินสด 12,000 บาท ร้านให้ผ่อน 0% แต่ต้องจ่ายค่าธรรมเนียมเดือนละ 150 บาท นาน 12 เดือน · อีกทางคือเก็บเงินในบัญชีดอกเบี้ย 1.5% ต่อปี แล้วค่อยซื้อเงินสด ควรเลือกทางไหนถ้ามีเงินพอซื้อเงินสดตอนนี้',data:'',model:{C:'ควรซื้อเงินสด',E:'ผ่อน: จ่ายเพิ่มค่าธรรมเนียม 150 × 12 = 1,800 บาท · ถ้าเก็บ 12,000 บาทไว้ 1 ปีได้ดอกเบี้ย 12,000 × 0.015 = 180 บาท',R:'ค่าธรรมเนียม 1,800 บาทมากกว่าดอกเบี้ยที่ได้ 180 บาท ต้นทุนจริงของการผ่อนจึงสูงกว่า แม้จะเรียกว่าผ่อน 0%'}}],
+m5x:[
+ {id:'cx',where:'u1',title:'จำนวนเชิงซ้อน: i ยกกำลังเท่าใด',q:'เพื่อนคำนวณ i¹⁰⁰ แล้วได้ −1 เพราะ "100 เป็นจำนวนคู่ และ i² = −1" ถูกหรือไม่',data:'',model:{C:'ไม่ถูก i¹⁰⁰ = 1',E:'i¹ = i, i² = −1, i³ = −i, i⁴ = 1 วนรอบทุก 4 · 100 ÷ 4 เหลือเศษ 0',R:'เศษ 0 ตรงกับ i⁴ = 1 ไม่ใช่ i² ดังนั้นต้องดูเศษจากการหารด้วย 4 ไม่ใช่ดูแค่ว่าเป็นคู่หรือคี่'}},
+ {id:'cnt',where:'u2',title:'การนับ: รหัสผ่านแบบไหนปลอดภัยกว่า',q:'รหัสผ่าน A: ตัวเลข 6 หลัก (0–9 ซ้ำได้) · รหัสผ่าน B: ตัวอักษรอังกฤษพิมพ์เล็ก 4 ตัว (26 ตัว ซ้ำได้) แบบใดเดาได้ยากกว่า',data:'',model:{C:'แบบ A เดาได้ยากกว่า',E:'A มี 10⁶ = 1,000,000 แบบ · B มี 26⁴ = 456,976 แบบ',R:'ใช้หลักการคูณ จำนวนแบบยิ่งมาก การเดาสุ่มยิ่งยาก 10⁶ มากกว่า 26⁴ ดังนั้นแบบ A ปลอดภัยกว่า'}},
+ {id:'pr',where:'u3',title:'ความน่าจะเป็น: สุ่มตัวแทนห้อง',q:'สุ่มนักเรียน 2 คนจากห้องที่มีชาย 12 คน หญิง 18 คน เพื่อนบอกว่า "โอกาสได้ชายทั้งคู่คือ 12/30 × 12/30" ถูกหรือไม่',data:'',model:{C:'ไม่ถูก ความน่าจะเป็นคือ 22/145',E:'เลือก 2 จาก 30 ได้ C(30, 2) = 435 แบบ · ชายทั้งคู่ C(12, 2) = 66 แบบ → 66/435 = 22/145',R:'สุ่มคนเดิมซ้ำไม่ได้ เหตุการณ์ไม่อิสระกัน คนที่สองจึงเหลือชาย 11 จาก 29 คน (12/30 × 11/29 = 22/145) ไม่ใช่ 12/30 ซ้ำ'}}]};
+
+KReason({site:'m5',ctx:()=>window.M5X?M5X():{},tasks:KREASON_TASKS.m5,
+ place:t=>{const u=UNITS.find(x=>'u'+x.u===t.where);const p=document.getElementById('b-pr');if(!u||!p)return null;const cur=decodeURIComponent(location.hash.slice(1)).split('/')[0];return u.topics[u.topics.length-1]===cur?p.parentNode:null},
+ hook:f=>addEventListener('m5topic',()=>setTimeout(f,0))});
+</script>
+<script>
+/* ===== STEM·SELC (ใช้ร่วม ม.1 ม.3 ม.5) — สืบจากปรากฏการณ์จริง + วิเคราะห์ข้อมูลด้วย CODAP + CER ก่อน/หลังเห็นหลักฐาน · ลิขสิทธิ์ครูคุ้ม ===== */
+window.KSelc=function(A){
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ctx=()=>(A.ctx()||{});const ACTS=A.acts;
+const num=v=>{const n=parseFloat(String(v).replace(/,/g,''));return isFinite(n)?n:null};
+const r2=x=>Math.round(x*100)/100;
+if(!document.getElementById('slcCss')){const css=document.createElement('style');css.id='slcCss';css.textContent=`
+.slc{margin-top:18px;border-radius:20px;padding:16px 18px;border:2px solid #17a673;background:color-mix(in srgb,#17a673 7%,transparent);text-align:left}
+.slc h3{margin:0 0 4px;font-size:19px}.slc h3::before,.slc h3::after{content:none!important;display:none!important}
+.slc .bdg{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:1px 9px;margin:0 4px 4px 0;background:#17a673;color:#fff}
+.slc .bdg.c{background:#f2a33a;color:#1d1830}.slc .bdg.s{background:#2f7de1}
+.slc .stp{margin-top:12px;border-radius:14px;padding:10px 12px;background:color-mix(in srgb,currentColor 4%,transparent)}
+.slc .stp>b{display:block;margin-bottom:4px}
+.slc textarea,.slc input[type=text],.slc input[type=number]{font:inherit;width:100%;box-sizing:border-box;border-radius:10px;border:1px solid color-mix(in srgb,currentColor 25%,transparent);background:transparent;color:inherit;padding:7px 9px}
+.slc textarea{min-height:58px}
+.slc label{display:block;margin:6px 0 2px;font-size:14.5px}
+.slc table{width:100%;border-collapse:collapse;font-size:14.5px}.slc td,.slc th{padding:4px;border-bottom:1px solid color-mix(in srgb,currentColor 12%,transparent);text-align:left}
+.slc td input{min-width:60px}
+.slc .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.slc button{font:inherit;min-height:42px;border-radius:12px;padding:7px 13px;cursor:pointer;border:1px solid color-mix(in srgb,currentColor 25%,transparent);background:transparent;color:inherit}
+.slc button.p{background:#17a673;border-color:#17a673;color:#fff;font-weight:600}
+.slc a.cd{display:inline-flex;align-items:center;min-height:42px;border-radius:12px;padding:7px 13px;background:#2f7de1;color:#fff;text-decoration:none;font-weight:600}
+.slc svg{width:100%;height:auto;max-height:300px}
+.slc .res{margin-top:8px;font-size:15px}
+.slc .msg{font-size:14px;opacity:.85;margin-top:6px}
+.slc ol{margin:4px 0 0 20px;padding:0}.slc li{margin:2px 0}
+.slc .cn{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:620px){.slc .cn{grid-template-columns:1fr}}
+.slc .tvw table{font-size:13.5px}
+.slc,.slc .stp,.slc label,.slc p,.slc b,.slc li,.slc summary{text-align:left!important}
+.slc label{display:block!important;width:auto!important;max-width:none!important;margin:6px 0 2px!important;padding:0!important;justify-self:stretch!important;float:none!important}
+.slc .stp,.slc .cn>div{display:block!important}
+.slc .cn>div,.slc .stp{min-width:0;width:auto!important;max-width:none!important;margin-left:0!important;margin-right:0!important}
+.slc textarea{width:100%!important;max-width:none!important;margin:0!important;display:block}`;document.head.appendChild(css)}
+
+/* ---------- กราฟ ---------- */
+function chart(a,p,st){if(a.draw)return a.draw(p,st);const W=560,H=280,L=52,B=40,T=16,R=14;if(!p.length)return'<p class="msg">กรอกข้อมูลแล้วกราฟจะขึ้นที่นี่</p>';
+ const ys=p.flatMap(v=>[v.y,v.y2]).filter(v=>v!=null);let lo=a.kind==='pair'?Math.floor(Math.min(...ys)-1):0,hi=Math.max(...ys,a.goal&&a.kind==='line'?a.goal:0)||1;if(a.id==='water')hi=100;if(hi<=lo)hi=lo+1;
+ const Y=v=>H-B-(v-lo)/(hi-lo)*(H-B-T);let g='';
+ for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,y=Y(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="currentColor" stroke-opacity=".12"/><text x="${L-6}" y="${y+4}" font-size="11" text-anchor="end" fill="currentColor" opacity=".7">${r2(v)}</text>`}
+ let body='',lab='';
+ if(a.kind==='line'){const xm=Math.max(...p.map(v=>v.x),a.goal&&p.length?a.goal/(p[p.length-1].y/p[p.length-1].x||1):0)||1,X=x=>L+x/xm*(W-L-R);
+  const A=p.length&&p[p.length-1].x?p[p.length-1].y/p[p.length-1].x:0;
+  body=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(xm)}" y2="${Y(A*xm)}" stroke="#2f7de1" stroke-width="3"/>`+(a.goal?`<line x1="${L}" x2="${W-R}" y1="${Y(a.goal)}" y2="${Y(a.goal)}" stroke="#e0558f" stroke-dasharray="6 5"/><text x="${W-R}" y="${Y(a.goal)-6}" font-size="12" text-anchor="end" fill="#e0558f">ถังเต็ม ${a.goal.toLocaleString()} ลิตร</text>`:'')+p.map(v=>`<circle cx="${X(v.x)}" cy="${Y(v.y)}" r="5" fill="#f2a33a"/>`).join('');
+  for(let k=0;k<=4;k++){const v=xm*k/4;lab+=`<text x="${X(v)}" y="${H-B+16}" font-size="11" text-anchor="middle" fill="currentColor" opacity=".7">${r2(v)}</text>`}
+  lab+=`<text x="${(W+L)/2}" y="${H-4}" font-size="12" text-anchor="middle" fill="currentColor">${a.xlab}</text>`}
+ else{const n=p.length,sx=(W-L-R)/n;p.forEach((v,i)=>{const x0=L+sx*i;if(a.kind==='pair'){const w=sx*.32;[[v.y,'#17a673',x0+sx*.16],[v.y2,'#d94f3d',x0+sx*.52]].forEach(([y,c,x])=>{body+=`<rect x="${x}" y="${Y(y)}" width="${w}" height="${H-B-Y(y)}" rx="4" fill="${c}"/><text x="${x+w/2}" y="${Y(y)-5}" font-size="11" text-anchor="middle" fill="currentColor">${y}</text>`})}
+  else{const w=sx*.6,x=x0+sx*.2;body+=`<rect x="${x}" y="${Y(v.y)}" width="${w}" height="${H-B-Y(v.y)}" rx="5" fill="${['#2f7de1','#17a673','#f2a33a','#7c5ce0','#e0558f','#14a3b8'][i%6]}"/><text x="${x+w/2}" y="${Y(v.y)-6}" font-size="12" text-anchor="middle" fill="currentColor">${v.y}%</text>`}
+  lab+=`<text x="${x0+sx/2}" y="${H-B+16}" font-size="12" text-anchor="middle" fill="currentColor">${esc(String(v.x).slice(0,12))}</text>`});
+  if(a.kind==='pair')lab+=`<rect x="${L}" y="2" width="12" height="12" rx="3" fill="#17a673"/><text x="${L+16}" y="12" font-size="12" fill="currentColor">ใต้ต้นไม้</text><rect x="${L+90}" y="2" width="12" height="12" rx="3" fill="#d94f3d"/><text x="${L+106}" y="12" font-size="12" fill="currentColor">ลานคอนกรีต</text>`}
+ return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(a.ylab)}">${g}<line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="currentColor" stroke-opacity=".5"/>${body}${lab}<text x="12" y="${(H-B+T)/2}" font-size="12" fill="currentColor" transform="rotate(-90 12 ${(H-B+T)/2})" text-anchor="middle">${esc(a.ylab)}</text></svg>`}
+
+/* ---------- CSV สำหรับ CODAP ---------- */
+function csv(a,st){const p=a.calc(st.rows,st.ex);let h,rows;
+ if(a.csv){[h,rows]=a.csv(st,p)}else if(a.id==='water'){h=['พื้นผิว','น้ำที่เท_mL','น้ำที่เหลือ_mL','ร้อยละที่ซึม'];rows=st.rows.filter(r=>r[0]&&num(r[2])!=null).map(r=>{const q=p.find(v=>v.x===r[0]);return[r[0],r[1],r[2],q?q.y:'']})}
+ else if(a.id==='roof'){h=['x_ฝน_mm','y_น้ำ_ลิตร','พื้นที่หลังคา_ตรม'];rows=p.map(v=>[v.x,v.y,st.ex])}
+ else{h=['วันที่','จุดวัด','อุณหภูมิ'];rows=p.flatMap(v=>[[v.x,'ใต้ต้นไม้',v.y],[v.x,'ลานคอนกรีต',v.y2]])}
+ const c=ctx(),who=c.ME?[c.ME.cls||'',c.ME.no||'']:['',''];h=h.concat(['ห้อง','เลขที่']);
+ const q=s=>/[",\n]/.test(String(s))?'"'+String(s).replace(/"/g,'""')+'"':String(s);
+ return'﻿'+[h,...rows.map(r=>r.concat(who))].map(r=>r.map(q).join(',')).join('\n')}
+function dl(a,st){const b=new Blob([csv(a,st)],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),x=document.createElement('a');x.href=u;x.download='selc-'+a.id+'.csv';document.body.appendChild(x);x.click();x.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+
+/* ---------- เก็บงาน ---------- */
+const lkey=a=>{const c=ctx();return'selc-'+A.site+'-'+(c.U&&c.U.uid||'guest')+'-'+a.id};
+const loadL=a=>{try{return JSON.parse(localStorage.getItem(lkey(a))||'null')}catch(e){return null}};
+const saveL=(a,st)=>{try{localStorage.setItem(lkey(a),JSON.stringify(st))}catch(e){}};
+async function send(a,st){const c=ctx();if(!c.DB||!c.U||!c.ME||!c.DB.set)return'login';
+ const doc={uid:c.U.uid,sid:c.ME.sid||'',name:c.ME.name||'',cls:c.ME.cls||'',no:c.ME.no||'',site:A.site,act:a.id,title:a.title,
+  see:st.see||'',wonder:st.wonder||'',pre:st.pre||'',rows:JSON.stringify(st.rows),ex:st.ex||'',C:st.C||'',E:st.E||'',R:st.R||'',chg:st.chg||'',lim:st.lim||'',
+  time:window.firebase&&firebase.firestore?firebase.firestore.FieldValue.serverTimestamp():new Date()};
+ await c.DB.set('selc/'+c.U.uid+'_'+A.site+'_'+a.id,doc,true);return'ok'}
+
+/* ---------- การ์ด ---------- */
+function card(a){const L=A.place(a.where);if(!L||L.querySelector('.slc[data-a="'+a.id+'"]'))return;
+ let st=loadL(a)||{rows:a.rows.map(r=>r.slice()),ex:a.extra?a.extra.def:''};
+ const s=document.createElement('section');s.className='slc';s.dataset.a=a.id;
+ const F=(k,lab,ph)=>`<label for="sl-${a.id}-${k}">${lab}</label><textarea id="sl-${a.id}-${k}" data-k="${k}" placeholder="${esc(ph||'')}">${esc(st[k]||'')}</textarea>`;
+ s.innerHTML=`<span class="bdg">STEM·SELC</span><span class="bdg s">CODAP</span><span class="bdg c">${esc(a.ccc)}</span>
+ <h3>🌏 ${esc(a.title)}</h3>
+ <div class="stp"><b>1) สังเกตปรากฏการณ์</b><p style="margin:0">${esc(a.ph)}</p><div class="cn"><div>${F('see','ฉันเห็น…')}</div><div>${F('wonder','ฉันสงสัยว่า…')}</div></div></div>
+ <div class="stp"><b>2) คำถามและคาดการณ์ก่อนเห็นหลักฐาน</b><p style="margin:0"><b>คำถาม:</b> ${esc(a.ask)}</p>${F('pre','ฉันคาดว่า… เพราะ…')}</div>
+ <div class="stp"><b>3) ออกแบบและเก็บข้อมูล</b><ol>${a.how.map(h=>`<li>${esc(h)}</li>`).join('')}</ol>
+  ${a.extra?`<label for="sl-${a.id}-ex">${esc(a.extra.label)}</label><input type="number" min="0" step="any" id="sl-${a.id}-ex" class="sl-ex" value="${esc(st.ex)}">`:''}
+  <div style="overflow-x:auto;margin-top:8px"><table><thead><tr>${a.cols.map(h=>`<th>${esc(h)}</th>`).join('')}<th></th></tr></thead><tbody class="sl-tb"></tbody></table></div>
+  <div class="row"><button type="button" class="sl-add">+ เพิ่มแถว</button></div></div>
+ <div class="stp"><b>4) วิเคราะห์ข้อมูล</b><div class="sl-ch"></div><p class="res sl-sum"></p>
+  <details><summary>วิเคราะห์ต่อใน CODAP (เครื่องมือวิเคราะห์ข้อมูลฟรี ไม่ต้องติดตั้ง)</summary><ol>${a.codap.map(h=>`<li>${esc(h)}</li>`).join('')}</ol></details>
+  <div class="row"><button type="button" class="sl-dl">⬇ ดาวน์โหลดข้อมูล (CSV)</button><a class="cd" href="https://codap.concord.org/app/" target="_blank" rel="noopener">เปิด CODAP ↗</a></div></div>
+ <div class="stp"><b>5) อธิบายด้วยหลักฐาน (CER) หลังเห็นข้อมูล</b>
+  ${F('C','C ข้อกล่าวอ้าง — ตอบคำถามในประโยคเดียว')}${F('E','E หลักฐาน — ยกตัวเลขจากข้อมูลอย่างน้อย 2 จุด')}${F('R','R เหตุผล — ใช้หลักคณิตศาสตร์อธิบายว่าทำไมหลักฐานสนับสนุนข้อกล่าวอ้าง')}
+  ${F('chg','คำตอบเปลี่ยนจากที่คาดไว้ไหม? หลักฐานอะไรทำให้เปลี่ยนหรือยืนยัน')}
+  ${F('lim','หลักฐานนี้ "บอกอะไรไม่ได้" บ้าง?')}
+  <details><summary>เฉลยแนวคิด: ข้อจำกัดของหลักฐาน (กดดูหลังเขียนเองแล้ว)</summary><p>${esc(a.limit)}</p></details>
+  <div class="row"><button type="button" class="p sl-send">ส่งงานให้ครู</button>${A.isT(ctx())?'<button type="button" class="sl-tv">ดูงานนักเรียน (ครู)</button>':''}</div><p class="msg sl-msg"></p><div class="tvw"></div></div>`;
+ const anchor=L.querySelector(':scope > .krs')||null;(anchor?anchor.before(s):L.appendChild(s));
+ const tb=s.querySelector('.sl-tb');
+ function rowsUI(){tb.innerHTML=st.rows.map((r,i)=>`<tr>${a.cols.map((h,j)=>`<td><input ${a.id==='roof'||j>0?'type="number" step="any" inputmode="decimal"':'type="text"'} aria-label="${esc(h)} แถว ${i+1}" data-i="${i}" data-j="${j}" value="${esc(r[j]??'')}"></td>`).join('')}<td><button type="button" aria-label="ลบแถว ${i+1}" data-del="${i}">✕</button></td></tr>`).join('')}
+ function draw(){const p=a.calc(st.rows,st.ex);s.querySelector('.sl-ch').innerHTML=chart(a,p,st);s.querySelector('.sl-sum').innerHTML=a.sum(p,st.ex)||'';saveL(a,st)}
+ rowsUI();draw();
+ tb.addEventListener('input',e=>{const t=e.target;if(t.dataset.i==null)return;st.rows[+t.dataset.i][+t.dataset.j]=t.value;draw()});
+ tb.addEventListener('click',e=>{const d=e.target.dataset.del;if(d==null)return;st.rows.splice(+d,1);if(!st.rows.length)st.rows.push(a.cols.map(()=>''));rowsUI();draw()});
+ s.querySelector('.sl-add').onclick=()=>{if(st.rows.length>=30)return;st.rows.push(a.cols.map((h,j)=>a.id==='water'&&j===1?'100':''));rowsUI();draw()};
+ const ex=s.querySelector('.sl-ex');if(ex)ex.oninput=()=>{st.ex=ex.value;draw()};
+ s.querySelectorAll('textarea[data-k]').forEach(t=>t.oninput=()=>{st[t.dataset.k]=t.value;saveL(a,st)});
+ s.querySelector('.sl-dl').onclick=()=>dl(a,st);
+ const msg=s.querySelector('.sl-msg');
+ s.querySelector('.sl-send').onclick=async()=>{if(!(st.C&&st.E&&st.R)){msg.textContent='เขียน C E R ให้ครบก่อนส่งนะ';return}msg.textContent='กำลังส่ง…';
+  try{const r=await send(a,st);msg.textContent=r==='ok'?'ส่งให้ครูแล้ว ✓ แก้แล้วส่งซ้ำได้ ระบบเก็บครั้งล่าสุด':'เข้าสู่ระบบก่อนจึงจะส่งได้ (งานยังเก็บไว้ในเครื่อง)'}catch(e){msg.textContent='ส่งไม่สำเร็จ ลองใหม่อีกครั้ง (งานยังเก็บไว้ในเครื่อง)'}};
+ const tv=s.querySelector('.sl-tv');if(tv)tv.onclick=async()=>{const w=s.querySelector('.tvw');w.textContent='กำลังโหลด…';let r=[];
+  try{r=(await ctx().DB.q('selc',[['act','==',a.id]])).filter(x=>x.site===A.site)}catch(e){w.textContent='โหลดไม่ได้ ตรวจสิทธิ์ Firestore ของคอลเลกชัน selc';return}
+  r.sort((x,y)=>String(x.cls).localeCompare(String(y.cls))||(+x.no||0)-(+y.no||0));
+  w.innerHTML=r.length?`<p class="msg">ส่งแล้ว ${r.length} คน</p><div style="overflow-x:auto"><table><tr><th>ห้อง/เลขที่</th><th>ชื่อ</th><th>คาดการณ์ก่อน</th><th>C</th><th>E</th><th>R</th><th>ข้อจำกัด</th></tr>${r.map(x=>`<tr><td>${esc(x.cls)} / ${esc(x.no)}</td><td>${esc(x.name)}</td><td>${esc(x.pre)}</td><td>${esc(x.C)}</td><td>${esc(x.E)}</td><td>${esc(x.R)}</td><td>${esc(x.lim)}</td></tr>`).join('')}</table></div>`:'<p class="msg">ยังไม่มีใครส่ง</p>'};
+}
+function init(){ACTS.forEach(a=>{try{card(a)}catch(e){console.error('selc',a.id,e)}})}
+if(A.hook)A.hook(()=>setTimeout(init,0));
+if(document.readyState==='loading')addEventListener('DOMContentLoaded',()=>setTimeout(init,300));else setTimeout(init,300);
+let lu='';setInterval(()=>{const c=ctx(),k=(c.U&&c.U.uid||'')+(A.isT(c)?'T':'');if(k!==lu){const first=lu==='';lu=k;if(!first){document.querySelectorAll('.slc').forEach(x=>x.remove());init()}}},1500);
+return{ACTS,csv,chart};
+};
+
+(function(){const SITE='m5';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=v=>{const n=parseFloat(String(v).replace(/,/g,''));return isFinite(n)?n:null};const r2=x=>Math.round(x*100)/100;
+const P=(rows,i)=>num(rows[i]&&rows[i][1]);
+const line=(W,H,L,B,T,R,xs,series,xlab,ylab,extra)=>{const all=series.flatMap(s=>s.v),hi=Math.max(...all,0)||1,n=xs.length,X=i=>L+(n<2?.5:i/(n-1))*(W-L-R),Y=v=>H-B-v/hi*(H-B-T);let g='';
+ for(let k=0;k<=4;k++){const v=hi*k/4;g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="currentColor" stroke-opacity=".12"/><text x="${L-6}" y="${Y(v)+4}" font-size="11" text-anchor="end" fill="currentColor" opacity=".7">${r2(v).toLocaleString()}</text>`}
+ let lx=L+8;series.forEach((s,j)=>{g+=`<polyline points="${s.v.map((v,i)=>X(i)+','+Y(v)).join(' ')}" fill="none" stroke="${s.c}" stroke-width="3" ${s.dash?'stroke-dasharray="7 5"':''}/>`+(s.dot?s.v.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="4" fill="${s.c}"/>`).join(''):'')+`<rect x="${lx}" y="2" width="12" height="12" rx="3" fill="${s.c}"/><text x="${lx+16}" y="12" font-size="12" fill="currentColor">${esc(s.n)}</text>`;lx+=26+s.n.length*7.5});
+ const st=Math.max(1,Math.ceil(n/8));xs.forEach((x,i)=>{if(i%st===0||i===n-1)g+=`<text x="${X(i)}" y="${H-B+16}" font-size="11" text-anchor="middle" fill="currentColor" opacity=".7">${esc(x)}</text>`});
+ return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ylab)}">${g}${extra?extra(X,Y):''}<line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="currentColor" stroke-opacity=".5"/><text x="${(W+L)/2}" y="${H-4}" font-size="12" text-anchor="middle" fill="currentColor">${esc(xlab)}</text><text x="12" y="${(H-B+T)/2}" font-size="12" fill="currentColor" transform="rotate(-90 12 ${(H-B+T)/2})" text-anchor="middle">${esc(ylab)}</text></svg>`};
+const kind=p=>{if(p.length<3)return null;const d=p.slice(1).map((v,i)=>r2(v.y-p[i].y)),q=p.slice(1).map((v,i)=>p[i].y?v.y/p[i].y:NaN);const sp=a=>Math.max(...a)-Math.min(...a);
+ const md=d.reduce((a,b)=>a+b,0)/d.length,mq=q.reduce((a,b)=>a+b,0)/q.length;return{d,q:q.map(v=>r2(v)),md:r2(md),mq:r2(mq),rd:Math.abs(md)>0?sp(d)/Math.abs(md):Infinity,rq:isFinite(mq)?sp(q)/Math.abs(mq):Infinity}};
+const carb=rows=>{const a=P(rows,0),pc=P(rows,1),n=P(rows,2);if(!(a>0)||pc==null||pc<0||pc>=100||!(n>=1&&n<=60&&Number.isInteger(n)))return null;const r=1-pc/100,base=[],red=[];for(let k=0;k<n;k++){base.push(a);red.push(a*Math.pow(r,k))}
+ const S=r===1?a*n:a*(1-Math.pow(r,n))/(1-r);return{a,r,n,base,red,S,B:a*n,ef:P(rows,3)}};
+const sol=rows=>{const C=P(rows,0),s=P(rows,1),i=P(rows,2),n=P(rows,3);if(!(C>0&&s>0)||i==null||i<0||!(n>=1&&n<=40&&Number.isInteger(n)))return null;const cum=[0],pv=[0];for(let k=1;k<=n;k++){cum.push(cum[k-1]+s);pv.push(pv[k-1]+s/Math.pow(1+i/100,k))}
+ const pay=C/s,dp=pv.findIndex(v=>v>=C);return{C,s,i,n,cum,pv,pay,dp}};
+const SELC_M5=[
+{id:'trash',where:'s3',title:'ขยะในห้องเรียนลดลงแบบไหน? — ลำดับเลขคณิตหรือเรขาคณิต',
+ ccc:'รูปแบบ · ความเสถียรและการเปลี่ยนแปลง',
+ ph:'ห้องเรียนเริ่มรณรงค์ลดขยะพลาสติก ทุกวันศุกร์ชั่งน้ำหนักขยะของทั้งสัปดาห์ ขยะลดลง แต่ลดแบบเท่า ๆ กันทุกสัปดาห์ หรือลดเป็นสัดส่วนเท่ากัน?',
+ ask:'ข้อมูลน้ำหนักขยะรายสัปดาห์ใกล้เคียงลำดับเลขคณิตหรือลำดับเรขาคณิตมากกว่า และถ้าเป็นแบบนี้ต่อไป สัปดาห์ที่ 10 จะเหลือขยะประมาณเท่าไร?',
+ how:['ชั่งขยะพลาสติกของห้องทุกวันศุกร์ด้วยตาชั่งเดิม อย่างน้อย 4 สัปดาห์','กรอกน้ำหนัก (kg) ตามลำดับสัปดาห์','ระบบหาผลต่างที่ติดกัน (d) และอัตราส่วนที่ติดกัน (r) ดูว่าแบบไหนคงที่กว่า','ใช้สูตร aₙ = a₁ + (n−1)d หรือ aₙ = a₁rⁿ⁻¹ ทำนายสัปดาห์ที่ 10 แล้วตรวจกับของจริงเมื่อถึงเวลา'],
+ cols:['สัปดาห์ที่','น้ำหนักขยะ (kg)'],rows:[['1',''],['2',''],['3',''],['4','']],
+ calc:rows=>rows.map(r=>({x:r[0],y:num(r[1])})).filter(v=>v.y!=null&&v.y>=0),
+ sum:p=>{const k=kind(p);if(!k)return'กรอกอย่างน้อย 3 สัปดาห์';const a1=p[0].y,m=p.length,ar=k.rd<=k.rq;const pa=r2(a1+9*k.md),pg=r2(a1*Math.pow(k.mq,9));
+  return`ผลต่าง d: ${k.d.join(', ')} (เฉลี่ย ${k.md})<br>อัตราส่วน r: ${k.q.join(', ')} (เฉลี่ย ${k.mq})<br>ดูจากการกระจาย <b>${ar?'ผลต่างคงที่กว่า → ใกล้ลำดับเลขคณิต':'อัตราส่วนคงที่กว่า → ใกล้ลำดับเรขาคณิต'}</b><br>ทำนายสัปดาห์ที่ 10 · แบบเลขคณิต: ${pa<0?'ติดลบ (เป็นไปไม่ได้ แบบนี้ใช้ทำนายไกลไม่ได้)':pa+' kg'} · แบบเรขาคณิต: ${pg} kg`},
+ draw:p=>{const k=kind(p);if(!k)return'<p class="msg">กรอกอย่างน้อย 3 สัปดาห์ กราฟจะขึ้นที่นี่</p>';const a1=p[0].y,N=Math.max(10,p.length),xs=[...Array(N)].map((_,i)=>String(i+1));
+  return line(560,280,52,40,22,14,xs,[{n:'แบบเลขคณิต',c:'#2f7de1',dash:1,v:xs.map((_,i)=>Math.max(0,a1+i*k.md))},{n:'แบบเรขาคณิต',c:'#7c5ce0',dash:1,v:xs.map((_,i)=>a1*Math.pow(k.mq,i))},{n:'ข้อมูลจริง',c:'#f2a33a',dot:1,v:p.map(v=>v.y)}],'สัปดาห์ที่','น้ำหนักขยะ (kg)')},
+ csv:(st,p)=>[['สัปดาห์','น้ำหนัก_kg'],p.map(v=>[v.x,v.y])],
+ codap:['ลากไฟล์ CSV ลงใน CODAP','ลาก "สัปดาห์" ไปแกนนอน และ "น้ำหนัก_kg" ไปแกนตั้ง','เมนูไม้บรรทัด → Plotted Function พิมพ์สูตรเลขคณิตและเรขาคณิตที่หาได้ ดูว่าเส้นไหนผ่านใกล้จุดมากกว่า'],
+ limit:'ข้อมูลไม่กี่สัปดาห์บอกแนวโน้ม "ช่วงสั้น" ได้ แต่ขยะไม่ลดตามสูตรไปตลอด แบบเลขคณิตจะติดลบซึ่งเป็นไปไม่ได้ และพฤติกรรมคนเปลี่ยนตามช่วงสอบ วันหยุด หรือกิจกรรม'},
+{id:'energy',where:'s6',title:'ลดไฟฟ้าเดือนละ p% ทั้งปีประหยัดได้เท่าไร? — อนุกรมเรขาคณิต',
+ ccc:'พลังงานและสสาร · สัดส่วน',
+ ph:'บ้านหรือห้องเรียนตั้งเป้าลดการใช้ไฟฟ้าลงเดือนละ p% จากเดือนก่อน เพื่อลดการปล่อยก๊าซเรือนกระจกจากการผลิตไฟฟ้า',
+ ask:'ถ้าลดเดือนละ p% ต่อเนื่อง n เดือน หน่วยไฟรวมจะน้อยกว่าการใช้เท่าเดิมกี่หน่วย คิดเป็นกี่เปอร์เซ็นต์?',
+ how:['ดูหน่วยไฟ (kWh) เดือนล่าสุดจากบิลค่าไฟที่บ้านเป็น a₁','ตั้งเป้าลดเดือนละ p% → อัตราส่วนร่วม r = 1 − p/100','ผลรวม n เดือน Sₙ = a₁(1 − rⁿ)/(1 − r) เทียบกับใช้เท่าเดิม = n·a₁','ถ้าอยากแปลงเป็น CO₂ ให้หาค่าการปล่อย (kgCO₂ ต่อหน่วยไฟ) จากเว็บองค์การบริหารจัดการก๊าซเรือนกระจก (อบก.) มาใส่เอง'],
+ cols:['รายการ','ค่า'],rows:[['หน่วยไฟเดือนแรก a₁ (kWh)',''],['ลดลงเดือนละ p (%)',''],['จำนวนเดือน n',''],['kgCO₂ ต่อหน่วยไฟ (ไม่บังคับ)','']],
+ calc:rows=>{const c=carb(rows);return c?[c]:[]},
+ sum:p=>{const c=p[0];if(!c)return'กรอก a₁ > 0, p ระหว่าง 0–99 และ n เป็นจำนวนเต็ม 1–60';const sv=c.B-c.S;return`r = ${r2(c.r)} · S<sub>${c.n}</sub> = <b>${r2(c.S).toLocaleString()} หน่วย</b> · ใช้เท่าเดิม ${r2(c.B).toLocaleString()} หน่วย<br>ประหยัด <b>${r2(sv).toLocaleString()} หน่วย (${r2(sv/c.B*100)}%)</b>`+(c.ef>0?` · ลด CO₂ ประมาณ <b>${r2(sv*c.ef).toLocaleString()} kg</b>`:'')+`<br>เดือนสุดท้ายใช้ ${r2(c.red[c.n-1])} หน่วย — ลองคิดว่าลดได้จริงไหม`},
+ draw:p=>{const c=p[0];if(!c)return'<p class="msg">กรอกค่าให้ครบ กราฟจะขึ้นที่นี่</p>';const xs=c.red.map((_,i)=>String(i+1));return line(560,280,60,40,22,14,xs,[{n:'ใช้เท่าเดิม',c:'#d94f3d',dash:1,v:c.base},{n:'ลดเดือนละ p%',c:'#17a673',dot:1,v:c.red}],'เดือนที่','หน่วยไฟ (kWh)')},
+ csv:(st,p)=>{const c=p[0];if(!c)return[['เดือน'],[]];let s=0,b=0;return[['เดือน','หน่วยไฟ_ลด','หน่วยไฟ_เท่าเดิม','สะสม_ลด','สะสม_เท่าเดิม'],c.red.map((v,i)=>{s+=v;b+=c.a;return[i+1,r2(v),c.a,r2(s),r2(b)]})]},
+ codap:['ลากไฟล์ CSV ลงใน CODAP','ลาก "เดือน" ไปแกนนอน และ "สะสม_ลด" ไปแกนตั้ง','ลาก "สะสม_เท่าเดิม" มาวางแกนตั้งซ้อน ดูช่องว่างระหว่างสองเส้น = ไฟที่ประหยัดได้'],
+ limit:'แบบจำลองนี้สมมติว่าลดได้ p% ทุกเดือนตลอด ซึ่งจริง ๆ ลดไปเรื่อย ๆ ไม่ได้ (ยังต้องใช้ตู้เย็น พัดลม) และหน่วยไฟขึ้นกับฤดูด้วย หน้าร้อนใช้มากกว่า'},
+{id:'solar',where:'m2',title:'ติดโซลาร์เซลล์คุ้มไหม? — มูลค่าปัจจุบันของเงินที่ประหยัดได้',
+ ccc:'ระบบ · เหตุและผล · Climate Justice',
+ ph:'หลายบ้านอยากติดโซลาร์เซลล์บนหลังคาเพื่อลดค่าไฟและลดการปล่อยคาร์บอน แต่ต้องจ่ายค่าติดตั้งก้อนใหญ่ตอนแรก',
+ ask:'ถ้านำค่าติดตั้งไปฝากธนาคารแทน เงินค่าไฟที่ประหยัดได้แต่ละปี (คิดเป็นมูลค่าปัจจุบัน) ต้องสะสมกี่ปีจึงคุ้มทุน และต่างจากการคิดแบบไม่สนดอกเบี้ยแค่ไหน?',
+ how:['หาราคาติดตั้งจริงจากใบเสนอราคาหรือเว็บผู้ขาย','ประมาณค่าไฟที่ประหยัดได้ต่อปีจากบิลค่าไฟหรือข้อมูลผู้ขาย','ใส่อัตราดอกเบี้ยเงินฝากต่อปีจากเว็บธนาคาร','มูลค่าปัจจุบันของเงินปีที่ k = เงินที่ประหยัด ÷ (1 + i)ᵏ แล้วรวมสะสม เทียบกับค่าติดตั้ง'],
+ cols:['รายการ','ค่า'],rows:[['ค่าติดตั้ง (บาท)',''],['ค่าไฟที่ประหยัดได้ต่อปี (บาท)',''],['ดอกเบี้ยเงินฝาก i (% ต่อปี)',''],['จำนวนปีที่พิจารณา','']],
+ calc:rows=>{const c=sol(rows);return c?[c]:[]},
+ sum:p=>{const c=p[0];if(!c)return'กรอกค่าให้ครบ (จำนวนปีเป็นจำนวนเต็ม 1–40)';return`ไม่คิดดอกเบี้ย: คุ้มทุนเมื่อ <b>${r2(c.pay)} ปี</b> (ค่าติดตั้ง ÷ เงินที่ประหยัดต่อปี)<br>คิดมูลค่าปัจจุบัน: ${c.dp>0?`คุ้มทุนในปีที่ <b>${c.dp}</b>`:`ภายใน ${c.n} ปี <b>ยังไม่คุ้มทุน</b>`} · มูลค่าปัจจุบันสะสม ${c.n} ปี = ${r2(c.pv[c.n]).toLocaleString()} บาท`},
+ draw:p=>{const c=p[0];if(!c)return'<p class="msg">กรอกค่าให้ครบ กราฟจะขึ้นที่นี่</p>';const xs=c.cum.map((_,i)=>String(i));
+  return line(560,280,66,40,22,14,xs,[{n:'สะสม (ไม่คิดดอกเบี้ย)',c:'#f2a33a',v:c.cum},{n:'มูลค่าปัจจุบันสะสม',c:'#17a673',dot:1,v:c.pv},{n:'ค่าติดตั้ง',c:'#d94f3d',dash:1,v:c.cum.map(()=>c.C)}].map((s,j)=>({...s})),'ปีที่','บาท')},
+ csv:(st,p)=>{const c=p[0];if(!c)return[['ปี'],[]];return[['ปี','สะสม_ไม่คิดดอกเบี้ย','มูลค่าปัจจุบันสะสม','ค่าติดตั้ง'],c.cum.map((v,k)=>[k,r2(v),r2(c.pv[k]),c.C])]},
+ codap:['ลากไฟล์ CSV ลงใน CODAP','ลาก "ปี" ไปแกนนอน และ "มูลค่าปัจจุบันสะสม" ไปแกนตั้ง','ลาก "ค่าติดตั้ง" มาซ้อนแกนตั้ง จุดที่เส้นตัดกันคือปีที่คุ้มทุน ลองเปลี่ยนดอกเบี้ยแล้วเทียบ'],
+ limit:'การคำนวณนี้ยังไม่รวมค่าบำรุงรักษา แผงที่เสื่อมลงทุกปี และค่าไฟที่อาจขึ้นลง อีกประเด็นคือความเป็นธรรม (Climate Justice): บ้านที่ไม่มีเงินก้อนหรือเช่าบ้านอยู่ติดตั้งไม่ได้ แม้จะได้ประโยชน์ระยะยาว'}
+];
+const pl=w=>{const cur=decodeURIComponent(location.hash.slice(1)).split('/')[0];if(cur!==w)return null;const k=document.getElementById('b-key2');if(!k)return null;let h=document.getElementById('slcHost');if(!h){h=document.createElement('div');h.id='slcHost';k.after(h)}return h};
+window.SELC5=KSelc({site:SITE,ctx:()=>window.M5X?M5X():{},place:pl,isT:c=>!!c.T,acts:SELC_M5,hook:f=>addEventListener('m5topic',f)});
+})();
+
 </script>
 </html>
